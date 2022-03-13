@@ -70,8 +70,8 @@ library(ggplot2)
 # library(factoextra)       #for plotting clusters from k-means
 # library(keras)
 # library(neuralnet)          #traditional neutal network package
-library(wordcloud)
-library(wordcloud2)
+# library(wordcloud)        # not needed for this analysis
+library(wordcloud2)         #version 0.2.2 required; install from github:https://github.com/Lchiffon/wordcloud2
 library(RColorBrewer)
 library(RSQLite)
 library(tm)               #text mining
