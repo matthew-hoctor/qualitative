@@ -1,0 +1,549 @@
+---
+title: "Visualizations"
+author: "Matthew Hoctor"
+date: "3/1/2022"
+output:
+  html_document:
+    number_sections: no
+    theme: lumen
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+---
+
+```{r packages, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# library(dplyr)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+# library(gridExtra)        #grid.arrange for multiple ggplots
+# library(reshape2)       #melt function for simple longform datasets
+# library(CarletonStats)
+# library(pwr)
+# library(BSDA)
+# library(exact2x2)
+# library(car)
+# library(dvmisc)
+# library(emmeans)
+# library(DescTools)
+# library(DiagrammeR)     #for plotting trees
+# library(nlme)
+# library(doBy)
+# library(geepack)
+# library(rje)
+# library(ISLR2)
+# library(psych)
+# library(MASS)
+# library(caret)            #for confusionMatrix function
+# library(rje)
+# library(class)          #for knn function
+# library(e1071)          #for naiveBayes function & SVM svm() funcion
+# library(boot)           #for boot function
+# library(covTest)        #for covTest function
+# library(leaps)          #for regsubsets function for best subset selection
+# library(broom)
+# library(glmnet)         #for glmnet() for shrinkage methods
+# library(doParallel)     #for parallel computing in glmnet(); does not work
+# library(pls)            #for pcr function
+# library(qpcR)           #for RSS function
+# library(splines)        #for bs() function for basis function of regression splines
+# library(quantreg)       #for quantreg() for quantile regression
+# library(tree)           #older package for tree regression
+# library(rpart)          #more maintained package for tree regression
+# library(rattle)         #for visually appealing tree plotting
+# library(randomForest)   #for random forest technique
+# library(party)          #?cforest function for plotting random forests?
+# library(xgboost)
+# library(gbm)            #more gradient boosting functions
+# library(LiblineaR)
+# library(svmpath)
+# library(msvmpath)
+# library(scatterplot3d)    #for the 3d scatterplot of pca
+# library(mclust)           #for cluster analysis; also imputeData() & imputePairs() functions
+# library(tightClust)       #another clustering library; tight.clust() function
+# library(softImpute)       #for imputing missing data
+# library(factoextra)       #for plotting clusters from k-means
+# library(keras)
+# library(neuralnet)          #traditional neutal network package
+library(wordcloud)
+library(wordcloud2)
+library(RColorBrewer)
+library(RSQLite)
+library(tm)               #text mining
+library(SnowballC)        #text stemming
+```
+
+# Setup
+
+## Get dataframes from the exported database
+
+using `sgibb`'s answer on stackexchange to get the database into dataframes, https://stackoverflow.com/questions/9802680/importing-files-with-extension-sqlite-into-r: 
+
+```{r}
+# open the connection
+con <- dbConnect(RSQLite::SQLite(), "2022-03-08_Yoga practice among veterans.sqlite3")
+
+#creates a variable with the list of tables
+tables <- dbListTables(con)
+tables
+
+## exclude sqlite_sequence (contains table information)
+tables <- tables[tables != "sqlite_sequence"]
+
+lDataFrames <- vector("list", length=length(tables))
+
+## create a data.frame for each table
+for (i in seq(along=tables)) {
+  lDataFrames[[i]] <- dbGetQuery(conn=con, statement=paste("SELECT * FROM '", tables[[i]], "'", sep=""))
+}
+```
+
+## Convert sections of `lDataFrames` into separate data frames:
+
+```{r}
+# commands <- lDataFrames[2]
+# commands <- commands[[1]]
+
+documents <- lDataFrames[3]
+documents <- documents[[1]]
+
+# highlight_tags <- lDataFrames[4]
+# highlight_tags <- highlight_tags[[1]]
+# 
+# highlights <- lDataFrames[5]
+# highlights <- highlights[[1]]
+# 
+# project_members <- lDataFrames[6]
+# project_members <- project_members[[1]]
+# 
+# projects <- lDataFrames[7]
+# projects <- projects[[1]]
+# 
+# tags <- lDataFrames[8]
+# tags <- tags[[1]]
+# 
+# users <- lDataFrames[9]
+# users <- users[[1]]
+```
+
+## Import the tagged text:
+
+```{r}
+tags <- read_xlsx("all_tags.xlsx")
+```
+
+Create numerical label for each tag:
+
+```{r}
+tags$n <- ifelse(tags$tag == "accessibility" , 1,
+           ifelse(tags$tag == "barriers/challenges" , 2, 
+           ifelse(tags$tag == "benefits" , 3,
+           ifelse(tags$tag == "delivery" , 4, 
+           ifelse(tags$tag == "facilitators" , 5,
+           ifelse(tags$tag == "modifications to yoga practice", 6, 
+           ifelse(tags$tag == "motivations", 7,
+           ifelse(tags$tag == "perceptions", 8, 
+           ifelse(tags$tag == "student characteristics", 9,
+           ifelse(tags$tag == "teacher characteristics", 10, 
+           ifelse(tags$tag == "teaching to veterans", 11,
+           ifelse(tags$tag == "telehealth perspectives", 12, 13))))))))))))
+```
+
+Create subsetted datasets for each tag:
+
+```{r}
+tags_1 <- subset(tags, n==1)
+tags_2 <- subset(tags, n==2)
+tags_3 <- subset(tags, n==3)
+tags_4 <- subset(tags, n==4)
+tags_5 <- subset(tags, n==5)
+tags_6 <- subset(tags, n==6)
+tags_7 <- subset(tags, n==7)
+tags_8 <- subset(tags, n==8)
+tags_9 <- subset(tags, n==9)
+tags_10 <- subset(tags, n==10)
+tags_11 <- subset(tags, n==11)
+tags_12 <- subset(tags, n==12)
+tags_13 <- subset(tags, n==13)
+# verification code
+# head(tags_1$content)
+# head(tags_13$content)
+```
+
+# Wordclouds
+
+## Creating a corpuses to compute wordclouds of:
+
+```{r}
+docs <- Corpus(VectorSource(documents$contents))         #creates collection of documents containing natural language text
+docs1 <- Corpus(VectorSource(tags_1$content))
+docs2 <- Corpus(VectorSource(tags_2$content))
+docs3 <- Corpus(VectorSource(tags_3$content))
+docs4 <- Corpus(VectorSource(tags_4$content))
+docs5 <- Corpus(VectorSource(tags_5$content))
+docs6 <- Corpus(VectorSource(tags_6$content))
+docs7 <- Corpus(VectorSource(tags_7$content))
+docs8 <- Corpus(VectorSource(tags_8$content))
+docs9 <- Corpus(VectorSource(tags_9$content))
+docs10 <- Corpus(VectorSource(tags_10$content))
+docs11 <- Corpus(VectorSource(tags_11$content))
+docs12 <- Corpus(VectorSource(tags_12$content))
+docs13 <- Corpus(VectorSource(tags_13$content))
+```
+
+## Initial cleanup:
+
+### Create Cleanup function:
+
+```{r}
+cleanup <- function(Corpus) {
+  docs$content <- gsub("<.*?>", " ", Corpus$content)         #grep to remove any html tags
+  docs <- tm_map(docs, removePunctuation)                 #remove punctuation
+  docs <- tm_map(docs, removeNumbers)                     #remove numbers
+  docs <- tm_map(docs, tolower)                           #convert all characters to lower case
+  docs <- tm_map(docs, removeWords, stopwords("english")) #remove common words
+  docs <- tm_map(docs, stripWhitespace)                   #remove whitespaces
+  # docs <- tm_map(docs, PlainTextDocument)                 #ensure the document is treated as text
+  
+  #Replacing words and patterns with space:
+  word <- c("\\n", "\\.", "\\,", "”", "\"", "interviewer", "”", "instructor")
+  docs$content <- gsub(word, " ", docs$content)
+  
+  #Removing certain words:
+  words <- c("yoga", "know", "think", "like", "just", "um", "’s", "'s", "can", "people", "instructor", "interviewer", "yeah", "lot", "kind", "get", "one", "little", "veterans", "teaching", "really", "different", "teacher", "students", "also", "say", "classes", "things", "class", "going", "something", "’re", "person", "even", "maybe", "uh", "bit", "actually", "probably", "might", "well", "mean", "way", "see", "teach", "much", "population", "right", "will", "arkansas", "seattle", "now", "don't", "ing", "’s", "pain", "thats", "dont", "theyre", "’re", "feel", "ive", "…", "don’t", "tell", "come", "program", "youre", "thing", "want", "’ve", "still", "theres", "try", "sometimes", "got", "work","use", "veteran", "florida", "general", "many", "pretty", "’m", "question", "stuff", "\\’s", "\\’re", "…", "sure", "seen", "make", "anything", "find", "getting", "good", "someone", "versus", "cause", "may", "part", "times", "makes", "floor", "notice", "sense", "cant", "great", "working", "far", "trying", "especially", "participate", "started", "week", "offer", "coming", "definitely", "years", "room", "barriers", "conditions", "take", "another", "issues", "mentioned", "need", "said", "specific", "using", "around", "either", "made", "youve", "talk", "okay", "’t", "based", "guess", "range", "weve", "example", "always", "biggest", "day", "noticed", "understand", "better", "compared", "everything", "ones", "whatever", "yes", "comes", "staff", "already", "believe", "didnt", "end", "long", "time", "mentioned",  "said", "specific", "using", "around", "either", "made", "youve", "talk", "taught", "okay", "’t", "based", "guess", "range", "starting", "weve", "younger", "example", "always", "couple", "differences", "noticed", "understand","compared", "everything", "ones", "whatever", "yes", "comes", "staff", "already", "believe", "didnt", "end", "long", "thank", "theyve", "uhhuh", "urban", "important", "start", "difference", "enjoy", "gonna", "keep", "mostly", "never", "questions", "since", "tend", "toward", "folks", "among", "else", "give", "huge", "impacted", "interesting", "last", "currently", "describe", "done", "first", "high", "necessarily", "next", "without", "year", "yep", "“oh", "absolutely", "enough", "towards", "every", "almost", "answer", "call", "certain", "certainly", "delivery", "including", "making", "taking", "thanks", "types", "wouldnt", "’ll", "saying", "clinic", "aspect", "set", "least", "idea", "called", "improve", "let", "portland", "uhm", "wanted", "whereas", "finding", "havent", "location", "typically", "facility", "ask", "change", "cool", "goes", "hour", "matter", "bye", "somebody", "conversation", "others", "perhaps", "place", "stay", "theyll", "used", "ways", "word", "yet", "away", "kinds", "related", "national", "outside", "ltleng", "particular", "put", "upon", "area", "differently", "easier", "low", "meeting", "monday", "obviously", "predominantly", "reasons", "regular", "student", "unless", "wanting", "wants", "words", "approaches", "less", "looking", "leng", "nice", "whats", "exactly", "often", "specifically", "two", "along", "minutes", "common", "opposed", "ahead", "bet", "fact", "heard", "lets", "putting", "says", "similar", "unfortunately", "verbiage", "willing", "youll", "forward", "non", "rec", "drop", "individual", "main", "per", "recently", "screen", "days", "figure", "hes","ago", "allows", "bring", "building", "depends")
+  docs <- tm_map(docs, removeWords, words)    #remove any additional specific words
+  docs <- tm_map(docs, stripWhitespace)   
+  
+  return(docs)
+}
+```
+
+### Cleanup `docs` using above cleanup function:
+
+```{r}
+docs <- cleanup(docs)
+docs1 <- cleanup(docs1)
+docs2 <- cleanup(docs2)
+docs3 <- cleanup(docs3)
+docs4 <- cleanup(docs4)
+docs5 <- cleanup(docs5)
+docs6 <- cleanup(docs6)
+docs7 <- cleanup(docs7)
+docs8 <- cleanup(docs8)
+docs9 <- cleanup(docs9)
+docs10 <- cleanup(docs10)
+docs11 <- cleanup(docs11)
+docs12 <- cleanup(docs12)
+docs13 <- cleanup(docs13)
+# head(docs3$content)
+```
+
+## Creating the term document matrix:
+
+### making a `TDM` function:
+
+```{r}
+TDM <- function(clean_corpus) {
+  dtm <- TermDocumentMatrix(clean_corpus)
+  matrix <- as.matrix(dtm)
+  v = sort(rowSums(matrix), decreasing = TRUE)
+  df = data.frame(word = names(v), freq = v)
+  #Cleaning up some remaining errors:
+  df <- subset(df, !(word %in% c("’s", "’re", "…", "’ve", "’m", "”", "“")))
+  
+  return(df)
+}
+```
+
+Test the function:
+
+```{r}
+# head(TDM(docs), 10)
+# head(TDM(docs12), 10)
+```
+
+### Creating the output
+
+```{r}
+df <- TDM(docs)
+df1 <- TDM(docs1)
+df2 <- TDM(docs2)
+df3 <- TDM(docs3)
+df4 <- TDM(docs4)
+df5 <- TDM(docs5)
+df6 <- TDM(docs6)
+df7 <- TDM(docs7)
+df8 <- TDM(docs8)
+df9 <- TDM(docs9)
+df10 <- TDM(docs10)
+df11 <- TDM(docs11)
+df12 <- TDM(docs12)
+df13 <- TDM(docs13)
+# check
+# head(df, 10)
+# head(df9, 10)
+```
+
+## Results
+
+### Creating the Main wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(documents$contents)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Main Wordcloud")
+```
+
+### Accessibility sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_1$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Barriers & Challenges sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_2$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Benefits sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_3$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Class delivery sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_4$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Facilitators sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_5$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Modifications to yoga practice sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_6$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Motivations sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_7$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Perceptions sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_8$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Student Characteristics sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_9$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Teacher Characteristics sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_10$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Teaching to Veterans sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_11$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+### Telehealth Perspectives sub-wordcloud:
+
+```{r}
+wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_12$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+```
+
+
+
+# old & worthless code
+
+Old wordcloud creation code
+
+```{r}
+# wordcloud(words = df$word, 
+#           freq = df$freq,
+#           min.freq = 1, 
+#           max.words = 200,
+#           random.order = FALSE, 
+#           rot.per = 0.35, 
+#           colors = brewer.pal(8, "Dark2"))
+```
+
+```{r}
+# wordcloud2(data = df,
+#            size = 1.6,
+#            color = 'random-dark')
+```
+
+Old code for computing termdocumentmatrix for the large dataframe:
+
+```{r}
+# dtm <- TermDocumentMatrix(docs)
+# matrix <- as.matrix(dtm)
+# v = sort(rowSums(matrix), decreasing = TRUE)
+# df = data.frame(word = names(v), freq = v)
+# #Cleaning up some remaining errors:
+# df <- subset(df, !(word %in% c("’s", "’re", "…", "’ve", "’m", "”", "“")))
+# (wrd <- head(df, 30))
+```
+
+Old code for cleaning docs:
+
+```{r}
+# docs$content <- gsub("<.*?>", " ", docs$content)         #grep to remove any html tags
+# docs <- tm_map(docs, removePunctuation)                 #remove punctuation
+# docs <- tm_map(docs, removeNumbers)                     #remove numbers
+# docs <- tm_map(docs, tolower)                           #convert all characters to lower case
+# docs <- tm_map(docs, removeWords, stopwords("english")) #remove common words
+# docs <- tm_map(docs, stripWhitespace)                   #remove whitespaces
+# # docs <- tm_map(docs, PlainTextDocument)                 #ensure the document is treated as text
+# 
+# #Replacing words and patterns with space:
+# word <- c("\\n", "\\.", "\\,", "”", "interviewer", "”", "instructor")
+# docs$content <- gsub(word, " ", docs$content)
+# 
+# #Removing certain words:
+# words <- c("yoga", "know", "think", "like", "just", "um", "’s", "'s", "can", "people", "instructor", "interviewer", "yeah", "lot", "kind", "get", "one", "little", "veterans", "teaching", "really", "different", "teacher", "students", "also", "say", "classes", "things", "class", "going", "something", "’re", "person", "even", "maybe", "uh", "bit", "actually", "probably", "might", "well", "mean", "way", "see", "teach", "much", "population", "right", "will", "arkansas", "seattle", "now", "don't", "ing", "’s", "pain", "thats", "dont", "theyre", "’re", "feel", "ive", "…", "don’t", "tell", "come", "program", "youre", "thing", "want", "’ve", "still", "theres", "try", "sometimes", "got", "work","use", "veteran", "florida", "general", "many", "pretty", "’m", "question", "stuff", "\\’s", "\\’re", "…", "sure", "seen", "make", "anything", "find", "getting", "good", "someone", "versus", "cause", "may", "part", "times", "makes", "floor", "notice", "sense", "cant", "great", "working", "far", "trying", "especially", "participate", "started", "week", "offer", "coming", "definitely", "years", "room", "barriers", "conditions", "take", "another", "issues", "mentioned", "need", "said", "specific", "using", "around", "either", "made", "youve", "talk", "okay", "’t", "based", "guess", "range", "weve", "example", "always", "biggest", "day", "noticed", "understand", "better", "compared", "everything", "ones", "whatever", "yes", "comes", "staff", "already", "believe", "didnt", "end", "long", "time", "mentioned",  "said", "specific", "using", "around", "either", "made", "youve", "talk", "taught", "okay", "’t", "based", "guess", "range", "starting", "weve", "younger", "example", "always", "couple", "differences", "noticed", "understand","compared", "everything", "ones", "whatever", "yes", "comes", "staff", "already", "believe", "didnt", "end", "long", "thank", "theyve", "uhhuh", "urban", "important", "start", "difference", "enjoy", "gonna", "keep", "mostly", "never", "questions", "since", "tend", "toward", "folks", "among", "else", "give", "huge", "impacted", "interesting", "last", "currently", "describe", "done", "first", "high", "necessarily", "next", "without", "year", "yep", "“oh", "absolutely", "enough", "towards", "every", "almost", "answer", "call", "certain", "certainly", "delivery", "including", "making", "taking", "thanks", "types", "wouldnt", "’ll", "saying", "clinic", "aspect", "set", "least", "idea", "called", "improve", "let", "portland", "uhm", "wanted", "whereas", "finding", "havent", "location", "typically", "facility", "ask", "change", "cool", "goes", "hour", "matter", "bye", "somebody", "conversation", "others", "perhaps", "place", "stay", "theyll", "used", "ways", "word", "yet", "away", "kinds", "related", "national", "outside", "ltleng", "particular", "put", "upon", "area", "differently", "easier", "low", "meeting", "monday", "obviously", "predominantly", "reasons", "regular", "student", "unless", "wanting", "wants", "words", "approaches", "less", "looking", "leng", "nice", "whats", "exactly", "often", "specifically", "two", "along", "minutes", "common", "opposed", "ahead", "bet", "fact", "heard", "lets", "putting", "says", "similar", "unfortunately", "verbiage", "willing", "youll", "forward", "non", "rec", "drop", "individual", "main", "per", "recently", "screen", "days", "figure", "hes","ago", "allows", "bring", "building", "depends")
+# docs <- tm_map(docs, removeWords, words)    #remove any additional specific words
+# docs <- tm_map(docs, stripWhitespace)                   #remove whitespaces again
+# 
+# # docs$content[1]                        #view some of the results
+```
+
+Cleaning up the corpus:
+
+```{r}
+# # docs1$content <- gsub("<.*?>", "", docs$content)            #grep to remove any html tags
+# 
+# # docs1 <- docs %>% 
+# #   tm_map(removeNumbers) %>%
+# #   tm_map(removePunctuation,
+# #           preserve_intra_word_contractions = TRUE,
+# #           preserve_intra_word_dashes = TRUE) %>%
+# #   tm_map(stripWhitespace)
+# 
+# docs1 <- tm_map(docs, removeNumbers)                       #remove numbers
+# docs1 <- tm_map(docs1, content_transformer(tolower))         #convert the text to lower case
+# docs1 <- tm_map(docs1, removeWords, stopwords("English"))    #removes english 'stopwords'
+# 
+# toSpace <- content_transformer(function (x, pattern) gsub(pattern, " ", x))
+# # docs1 <- tm_map(docs, toSpace, "/")    #not needed for this document?
+# # docs1 <- tm_map(docs, toSpace, "@")
+# # docs1 <- tm_map(docs1, toSpace, "#")
+# # docs1 <- tm_map(docs1, toSpace, ",")
+# # docs1 <- tm_map(docs1, toSpace, ":")
+# # docs1 <- tm_map(docs1, toSpace, "\\?")
+# # docs1 <- tm_map(docs1, toSpace, "\\(")
+# # docs1 <- tm_map(docs1, toSpace, "\\)")
+# # docs1 <- tm_map(docs1, toSpace, "\\[")
+# # docs1 <- tm_map(docs1, toSpace, "\\]")
+# # docs1 <- tm_map(docs1, toSpace, "\\*")
+# # docs1 <- tm_map(docs1, toSpace, "\\.")    #period needs to be double escaped because of the way R handles quotes: https://stat.ethz.ch/R-manual/R-devel/library/base/html/Quotes.html
+# # docs1 <- tm_map(docs1, toSpace, "…")
+# docs1$content <- gsub("<.*?>", "", docs$content)            #grep to remove any html tags
+# 
+# #list of words to remove:
+# list <- c("yoga", "know", "think", "like", "\n", "just", "um", "’s", "'s", "can", "people", "instructor", "interviewer", "yeah", "lot", "kind", "get", "one", "little", "veterans", "teaching", "really", "different", "teacher", "students", "also", "say", "classes", "things", "class", "going", "something", "’re", "person", "even", "maybe", "uh", "bit", "actually", "probably", "might", "well", "mean", "way", "see", "teach", "much", "population", "right", "will", "arkansas", "seattle", "now", "don't", "ing")
+# 
+# for (word in list) {
+#   docs1$content <- gsub(word, "", docs1$content)   #grep to remove any common meaningless words
+# }
+# 
+# docs1 <- tm_map(docs1, stripWhitespace) #remove white spaces again
+# docs1$content[1]                        #view some of the results
+```
+
+
+Initial Cleaning:
+
+```{r}
+# # docs <- gsub("<.*?>", "", docs)            #grep to remove any html tags
+# 
+# docs <- docs %>% 
+#   tm_map(removeNumbers) %>%
+#   tm_map(removePunctuation,
+#           preserve_intra_word_contractions = TRUE,
+#           preserve_intra_word_dashes = TRUE) %>%
+#   tm_map(stripWhitespace)
+# 
+# docs$content[1]                        #view some of the results
+```
+
+# Session Info
+
+```{r}
+sessionInfo()
+```
+
+# References
+
+1. Holtz. The Wordcloud2 library | R-bloggers. Published December 9, 2016. Accessed March 13, 2022. https://www.r-bloggers.com/2016/12/the-wordcloud2-library/
+2. Rul CV den. How to Generate Word Clouds in R. Medium. Published October 20, 2019. Accessed March 13, 2022. https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a
+3. Wordclouds in R. Data Tricks. Published November 9, 2017. Accessed March 13, 2022. https://datatricks.co.uk/wordclouds-in-r
+4. Lang D, Chien G tin. Wordcloud2: Create Word Cloud by “Htmlwidget.”; 2018. Accessed March 13, 2022. https://CRAN.R-project.org/package=wordcloud2
