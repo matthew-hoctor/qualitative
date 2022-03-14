@@ -76,9 +76,46 @@ library(RColorBrewer)
 library(RSQLite)
 library(tm)               #text mining
 library(SnowballC)        #text stemming
+library(treemapify)       #for the treemapplot
 ```
 
 # Setup
+
+## Import the codebook data from taguette
+
+```{r}
+codebook <- arrange(read_excel("codebook2.xlsx"), n)
+```
+
+Creating a new dataframe for the treemapplot:
+
+```{r}
+n_words <- 4
+word_count <- rbind(head(df1, n_words), 
+                    head(df2, n_words), 
+                    head(df3, n_words), 
+                    head(df4, n_words), 
+                    head(df5, n_words), 
+                    head(df6, n_words), 
+                    head(df7, n_words), 
+                    head(df8, n_words), 
+                    head(df9, n_words), 
+                    head(df10, n_words), 
+                    head(df11, n_words), 
+                    head(df12, n_words), 
+                    head(df13, n_words))
+word_count$tag <- NULL
+word_count$highlights <- NULL
+word_count$prod <- NULL
+
+for (i in 1:13) {
+  for (j in 1:n_words) {
+    word_count$tag[j + (i-1)*n_words] <- codebook$tag[n=i]
+    word_count$highlights[j + (i-1)*n_words] <- codebook$highlights[n=i]
+    word_count$prod[j + (i-1)*n_words] <- word_count$freq[j + (i-1)*n_words]*word_count$highlights[j + (i-1)*n_words]
+  }
+}
+```
 
 ## Get dataframes from the exported database
 
@@ -411,7 +448,35 @@ wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_12$content)))),
            minSize = "Accessibility")
 ```
 
+# Treemapplot
 
+```{r}
+# palette <- colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Set1'))(13)
+
+ggplot(word_count, 
+       aes(area = prod, 
+           fill = tag, 
+           label = word, 
+           subgroup = tag)) +
+  geom_treemap() +
+  geom_treemap_text(grow = T, reflow = T, colour = "black") +
+  geom_treemap_subgroup_border() +
+  geom_treemap_subgroup_text(place = "centre", 
+                             grow = T, 
+                             alpha = 0.35, 
+                             colour = "black", 
+                             fontface = "italic", 
+                             min.size = 0) +
+  # facet_wrap( ~ hemisphere) +
+  scale_fill_brewer(palette = "Paired") +
+  # scale_fill_brewer(palette = palette) +
+  theme(legend.position = "bottom") +
+  labs(
+    title = "Major word themes grouped by tag",
+    caption = "The area of each word tile represents frequency of that word, and the area of each tag represents the requency of that tag",
+    fill = "tag"
+  )
+```
 
 # old & worthless code
 
