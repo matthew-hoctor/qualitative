@@ -87,36 +87,6 @@ library(treemapify)       #for the treemapplot
 codebook <- arrange(read_excel("codebook2.xlsx"), n)
 ```
 
-Creating a new dataframe for the treemapplot:
-
-```{r}
-n_words <- 4
-word_count <- rbind(head(df1, n_words), 
-                    head(df2, n_words), 
-                    head(df3, n_words), 
-                    head(df4, n_words), 
-                    head(df5, n_words), 
-                    head(df6, n_words), 
-                    head(df7, n_words), 
-                    head(df8, n_words), 
-                    head(df9, n_words), 
-                    head(df10, n_words), 
-                    head(df11, n_words), 
-                    head(df12, n_words), 
-                    head(df13, n_words))
-word_count$tag <- NULL
-word_count$highlights <- NULL
-word_count$prod <- NULL
-
-for (i in 1:13) {
-  for (j in 1:n_words) {
-    word_count$tag[j + (i-1)*n_words] <- codebook$tag[n=i]
-    word_count$highlights[j + (i-1)*n_words] <- codebook$highlights[n=i]
-    word_count$prod[j + (i-1)*n_words] <- word_count$freq[j + (i-1)*n_words]*word_count$highlights[j + (i-1)*n_words]
-  }
-}
-```
-
 ## Get dataframes from the exported database
 
 using `sgibb`'s answer on stackexchange to get the database into dataframes, https://stackoverflow.com/questions/9802680/importing-files-with-extension-sqlite-into-r: 
@@ -449,6 +419,38 @@ wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_12$content)))),
 ```
 
 # Treemapplot
+
+## Creating a new dataframe for the treemapplot:
+
+```{r}
+n_words <- 4
+word_count <- rbind(head(df1, n_words), 
+                    head(df2, n_words), 
+                    head(df3, n_words), 
+                    head(df4, n_words), 
+                    head(df5, n_words), 
+                    head(df6, n_words), 
+                    head(df7, n_words), 
+                    head(df8, n_words), 
+                    head(df9, n_words), 
+                    head(df10, n_words), 
+                    head(df11, n_words), 
+                    head(df12, n_words), 
+                    head(df13, n_words))
+word_count$tag <- NULL
+word_count$highlights <- NULL
+word_count$prod <- NULL
+
+for (i in 1:13) {
+  for (j in 1:n_words) {
+    word_count$tag[j + (i-1)*n_words] <- codebook$tag[n=i]
+    word_count$highlights[j + (i-1)*n_words] <- codebook$highlights[n=i]
+    word_count$prod[j + (i-1)*n_words] <- word_count$freq[j + (i-1)*n_words]*word_count$highlights[j + (i-1)*n_words]
+  }
+}
+```
+
+## Rendering the treemapplot:
 
 ```{r}
 # palette <- colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Set1'))(13)
