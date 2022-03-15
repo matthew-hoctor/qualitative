@@ -77,6 +77,8 @@ library(RSQLite)
 library(tm)               #text mining
 library(SnowballC)        #text stemming
 library(treemapify)       #for the treemapplot
+library(webshot)          #for creating images from the wordclouds, which are html objects
+library(htmlwidgets)      #for saving the wordcloud2 objects, which are html
 ```
 
 # Setup
@@ -301,122 +303,329 @@ df13 <- TDM(docs13)
 ### Creating the Main wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(documents$contents)))),
+main_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(documents$contents)))),
            size = 1.6,
            color = 'random-dark')
-
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_1$content)))),
-           size = 1.6,
-           color = 'random-dark')
+main_cloud
 ```
 
 ### Accessibility sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_1$content)))),
+accessibility_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_1$content)))),
            size = 1.6,
            color = 'random-dark')
+
+accessibility_cloud
 ```
 
 
 ### Barriers & Challenges sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_2$content)))),
+barriers_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_2$content)))),
            size = 1.6,
            color = 'random-dark')
+
+barriers_cloud
 ```
 
 
 ### Benefits sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_3$content)))),
+benefits_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_3$content)))),
            size = 1.6,
            color = 'random-dark')
+
+benefits_cloud
 ```
 
 
 ### Class delivery sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_4$content)))),
+delivery_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_4$content)))),
            size = 1.6,
            color = 'random-dark')
+
+delivery_cloud
 ```
 
 
 ### Facilitators sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_5$content)))),
+facilitators_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_5$content)))),
            size = 1.6,
            color = 'random-dark')
+
+facilitators_cloud
 ```
 
 
 ### Modifications to yoga practice sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_6$content)))),
+modifications_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_6$content)))),
            size = 1.6,
            color = 'random-dark')
+
+modifications_cloud
 ```
 
 
 ### Motivations sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_7$content)))),
+motivations_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_7$content)))),
            size = 1.6,
            color = 'random-dark')
+
+motivations_cloud
 ```
 
 
 ### Perceptions sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_8$content)))),
+peceptions_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_8$content)))),
            size = 1.6,
            color = 'random-dark')
+
+peceptions_cloud
 ```
 
 
 ### Student Characteristics sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_9$content)))),
+students_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_9$content)))),
            size = 1.6,
            color = 'random-dark')
+
+students_cloud
 ```
 
 
 ### Teacher Characteristics sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_10$content)))),
+teachers_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_10$content)))),
            size = 1.6,
            color = 'random-dark')
+
+teachers_cloud
 ```
 
 
 ### Teaching to Veterans sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_11$content)))),
+veterans_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_11$content)))),
            size = 1.6,
            color = 'random-dark')
+
+veterans_cloud
 ```
 
 
 ### Telehealth Perspectives sub-wordcloud:
 
 ```{r}
-wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_12$content)))),
+telehealth_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_12$content)))),
            size = 1.6,
            color = 'random-dark',
            minSize = "Accessibility")
+
+telehealth_cloud
 ```
+
+### Yoga Approach sub-wordcloud:
+
+```{r}
+yoga_cloud <- wordcloud2(data = TDM(cleanup(Corpus(VectorSource(tags_13$content)))),
+           size = 1.6,
+           color = 'random-dark',
+           minSize = "Accessibility")
+
+yoga_cloud
+```
+
+## Code to save the plots
+
+Uncomment to save the plots if you want
+
+```{r}
+# # save it in html
+# saveWidget(main_cloud,
+#            file = "tmp.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp.html",
+#         file = "plots/main_wordcloud.png", 
+#         delay =60,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(accessibility_cloud,
+#            file = "tmp1.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp1.html",
+#         file = "plots/accessibility_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(barriers_cloud,
+#            file = "tmp2.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp2.html",
+#         file = "plots/barriers_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(benefits_cloud,
+#            file = "tmp3.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp3.html",
+#         file = "plots/benefits_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(delivery_cloud,
+#            file = "tmp4.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp4.html",
+#         file = "plots/delivery_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(facilitators_cloud,
+#            file = "tmp5.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp5.html",
+#         file = "plots/facilitators_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(modifications_cloud,
+#            file = "tmp6.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp6.html",
+#         file = "plots/modifications_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(motivations_cloud,
+#            file = "tmp7.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp7.html",
+#         file = "plots/motivations_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(peceptions_cloud,
+#            file = "tmp8.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp8.html",
+#         file = "plots/perceptions_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(students_cloud,
+#            file = "tmp9.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp9.html",
+#         file = "plots/students_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(teachers_cloud,
+#            file = "tmp10.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp10.html",
+#         file = "plots/teachers_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(veterans_cloud,
+#            file = "tmp11.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp11.html",
+#         file = "plots/veterans_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(telehealth_cloud,
+#            file = "tmp12.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp12.html",
+#         file = "plots/telehealth_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+# 
+# # save it in html
+# saveWidget(yoga_cloud,
+#            file = "tmp13.html",
+#            selfcontained = FALSE,
+#            title = "Overall Wordcloud")
+# # and in pdf
+# webshot("tmp13.html",
+#         file = "plots/yoga_wordcloud.png", 
+#         delay =30,             #delay 10s so that html things can load
+#         vwidth = 1600, 
+#         vheight=900)
+```
+
 
 # Treemapplot
 
@@ -478,9 +687,14 @@ ggplot(word_count,
     caption = "The area of each word tile represents frequency of that word, and the area of each tag represents the requency of that tag",
     fill = "tag"
   )
+
+ggsave("treemapplot.png",
+       path = "plots")
 ```
 
 # old & worthless code
+
+$$$$
 
 Old wordcloud creation code
 
