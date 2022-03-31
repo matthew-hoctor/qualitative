@@ -1,3 +1,9 @@
+# Data Files
+*.sqlite3
+*.xlsx
+*.csv
+*.xls
+
 # History files
 .Rhistory
 .Rapp.history
