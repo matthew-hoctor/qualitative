@@ -6,7 +6,8 @@ The objective of our proposed research is to explore yoga instructors' perceptio
 
 ## Report & Other Products:
  * [Report](https://docs.google.com/document/d/1fNsCHqthNu8wG4kbo-V1zlO0wOJ5o4VQK3dlGsnf9M4)
- * [Presentation](https://docs.google.com/presentation/d/1CNs6HScplKtIexat5DWJrsjKBJq6MMDcS4ZmnB8GC5c/edit#slide=id.p)
+ * [Presentation](https://docs.google.com/presentation/d/1CNs6HScplKtIexat5DWJrsjKBJq6MMDcS4ZmnB8GC5cM)
+ * [Interview Script](https://docs.google.com/document/d/1wcS5TUJW8T_L7EwW4mdeuYpkCu3VowJcrZNEitBEYaQ)
  
 ## Plots:
  * [Wordclouds](https://matthew-hoctor.github.io/qualitative/visualizations#Results)
